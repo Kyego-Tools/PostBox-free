@@ -4,9 +4,11 @@ import { useState, useCallback, useMemo } from "react"
 import { useQuery, useAction, useMutation } from "convex/react"
 import { api } from "@/convex/_generated/api"
 import { Id } from "@/convex/_generated/dataModel"
-import { FacebookContentType } from "@/components/dashboard/new-post/compose/account-selector"
-import { BATCH_TOAST_ID, PostingToast } from "./use-publishing-toasts"
 import { toast } from "sonner"
+import {
+  PostingToast,
+  BATCH_TOAST_ID,
+} from "@/components/dashboard/shared/posting-toast"
 
 export type PostType = "text" | "image" | "video"
 export type MediaFile = { file: File; preview: string; id: string }
@@ -41,7 +43,9 @@ export const CHAR_LIMITS: Record<string, number> = {
   instagram: 2200,
   tiktok: 2200,
 }
+
 export type InstagramContentType = "feed" | "reel" | "story"
+export type FacebookContentType = "feed" | "story"
 
 function resolveContentType(
   postType: PostType,

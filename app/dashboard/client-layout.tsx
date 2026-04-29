@@ -2,11 +2,11 @@
 
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import NextTopLoader from "nextjs-toploader"
-import { useRouter } from "next/navigation"
-import React, { useEffect } from "react"
+import React from "react"
 import { useConvexAuth, useQuery } from "convex/react"
 import { api } from "@/convex/_generated/api"
 import { AppSidebar } from "@/components/dashboard/shared/sidebar/app-sidebar"
+import { usePublishingToasts } from "@/hooks/use-publishing-toasts"
 
 interface ClientLayoutProps {
   children: React.ReactNode
@@ -23,37 +23,28 @@ function AuthLoading() {
   )
 }
 
+function PublishingToastListener() {
+  usePublishingToasts()
+  return null
+}
+
 export function ClientLayout({ children }: ClientLayoutProps) {
-  const router = useRouter()
   const { isAuthenticated, isLoading: isAuthLoading } = useConvexAuth()
-  // Only run the query once auth is confirmed — skip while loading/unauthenticated
   const currentUser = useQuery(api.users.getMe, isAuthenticated ? {} : "skip")
 
-  const user = useConvexAuth()
-  console.log("Current user in ClientLayout:", user) // Debug log to check current user
-  useEffect(() => {
-    if (!isAuthLoading && !isAuthenticated) {
-      router.replace("/sign-in")
-    }
-  }, [isAuthLoading, isAuthenticated, router])
-
-  // Debug — check browser console
-  console.log(
-    "[dashboard] isAuthLoading:",
-    isAuthLoading,
-    "isAuthenticated:",
-    isAuthenticated,
-    "currentUser:",
-    currentUser
-  )
-
   // Still loading auth, or not authenticated, or query hasn't resolved yet
-  if (isAuthLoading || !isAuthenticated || currentUser === undefined) {
+  if (
+    isAuthLoading ||
+    !isAuthenticated ||
+    currentUser === undefined ||
+    currentUser === null
+  ) {
     return <AuthLoading />
   }
 
   return (
     <>
+      <PublishingToastListener />
       <NextTopLoader color="#1e9df1" showSpinner={false} />
       <SidebarProvider
         style={
