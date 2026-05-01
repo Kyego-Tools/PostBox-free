@@ -30,6 +30,7 @@ import type * as lib_platforms_instagram from "../lib/platforms/instagram.js";
 import type * as lib_platforms_publish_facebook from "../lib/platforms/publish/facebook.js";
 import type * as lib_platforms_publish_helpers from "../lib/platforms/publish/helpers.js";
 import type * as lib_platforms_publish_instagram from "../lib/platforms/publish/instagram.js";
+import type * as lib_platforms_publish_threads from "../lib/platforms/publish/threads.js";
 import type * as lib_platforms_publish_tiktok from "../lib/platforms/publish/tiktok.js";
 import type * as lib_platforms_publish_twitter from "../lib/platforms/publish/twitter.js";
 import type * as lib_platforms_publish_types from "../lib/platforms/publish/types.js";
@@ -79,6 +80,7 @@ declare const fullApi: ApiFromModules<{
   "lib/platforms/publish/facebook": typeof lib_platforms_publish_facebook;
   "lib/platforms/publish/helpers": typeof lib_platforms_publish_helpers;
   "lib/platforms/publish/instagram": typeof lib_platforms_publish_instagram;
+  "lib/platforms/publish/threads": typeof lib_platforms_publish_threads;
   "lib/platforms/publish/tiktok": typeof lib_platforms_publish_tiktok;
   "lib/platforms/publish/twitter": typeof lib_platforms_publish_twitter;
   "lib/platforms/publish/types": typeof lib_platforms_publish_types;
