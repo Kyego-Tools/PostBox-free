@@ -145,14 +145,7 @@ async function publishStory(
     if (isVideo) {
       return await publishVideoStory(token, pageId, mediaUrl)
     } else {
-      const endpoint = `${API}/${pageId}/photo_stories`
-      console.log("[facebook] posting photo story to", endpoint)
-      const res = await postForm<{ id: string }>(endpoint, {
-        url: mediaUrl,
-        access_token: token,
-      })
-      console.log("[facebook] photo_stories response", res)
-      return res.id
+      return await publishPhotoStory(token, pageId, mediaUrl)
     }
   } catch (error) {
     console.error(
@@ -162,6 +155,34 @@ async function publishStory(
     )
     throw error
   }
+}
+
+async function publishPhotoStory(
+  token: string,
+  pageId: string,
+  imageUrl: string
+): Promise<string> {
+  // Photo stories require 2 steps:
+  // 1. Upload an unpublished photo via /photos to get a photo_id
+  // 2. Publish the story via /photo_stories with that photo_id
+  // (the /photo_stories endpoint does NOT accept `url` directly)
+  const uploadRes = await postForm<{ id: string }>(`${API}/${pageId}/photos`, {
+    url: imageUrl,
+    published: "false",
+    access_token: token,
+  })
+  console.log("[facebook] photo uploaded for story", uploadRes)
+
+  const publishRes = await postForm<{
+    success?: boolean
+    post_id?: string
+    id?: string
+  }>(`${API}/${pageId}/photo_stories`, {
+    photo_id: uploadRes.id,
+    access_token: token,
+  })
+  console.log("[facebook] photo_stories response", publishRes)
+  return publishRes.post_id ?? publishRes.id ?? uploadRes.id
 }
 
 async function publishVideoStory(
