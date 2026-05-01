@@ -55,8 +55,8 @@ No Node.js or programming tools needed — just [Docker Desktop](https://www.doc
 **Step 2: Configure**
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/social-media-scheduler.git
-cd social-media-scheduler
+git clone https://github.com/Kyego-Tools/PostBox-free.git
+cd PostBox-free
 cp .env.example .env
 ```
 
