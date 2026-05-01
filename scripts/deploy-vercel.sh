@@ -83,23 +83,153 @@ fi
 
 # ─── Helpers ───
 
+# Sanitize a string into a valid Vercel project name.
+# Vercel rules: ≤100 chars, lowercase, only [a-z0-9._-], no '---' run.
+sanitize_project_name() {
+  local raw="$1"
+  echo "$raw" \
+    | tr '[:upper:]' '[:lower:]' \
+    | sed -E 's/[^a-z0-9._-]+/-/g' \
+    | sed -E 's/-{2,}/-/g' \
+    | sed -E 's/^[-._]+|[-._]+$//g' \
+    | cut -c1-100
+}
+
+# Resolve the Vercel project name once so first-deploy and --update agree.
+if [ -n "$VERCEL_PROJECT_NAME" ]; then
+  VERCEL_PROJECT_NAME=$(sanitize_project_name "$VERCEL_PROJECT_NAME")
+else
+  VERCEL_PROJECT_NAME=$(sanitize_project_name "$(basename "$PWD")")
+fi
+# Final guard — if sanitization wiped everything, fall back to a safe default
+if [ -z "$VERCEL_PROJECT_NAME" ]; then
+  VERCEL_PROJECT_NAME="postbox-app"
+fi
+
+# Link the current directory to the Vercel project (creates it if missing).
+# Doing this explicitly avoids Vercel's auto-detection picking a name that
+# violates its naming rules (e.g. when the parent directory has spaces).
+#
+# We treat the presence of `.vercel/project.json` as success. Recent Vercel
+# CLI versions try to auto-attach a GitHub remote *after* linking, which can
+# fail with a non-zero exit if the account has no GitHub login-connection —
+# but the actual link is already complete by then, so it's safe to ignore.
+link_vercel_project() {
+  if [ -f ".vercel/project.json" ]; then
+    return
+  fi
+
+  local link_log
+  link_log=$(mktemp)
+
+  log "Linking project to Vercel as: ${BOLD}$VERCEL_PROJECT_NAME${NC}"
+  echo ""
+  echo -e "${DIM}── vercel link output ──${NC}"
+
+  # CI=1 + </dev/null suppress new interactive nags from the Vercel CLI
+  # (e.g. the "install Claude Code plugin?" prompt that ignores --yes).
+  set +e
+  CI=1 npx vercel link --yes --project "$VERCEL_PROJECT_NAME" \
+    --token "$VERCEL_TOKEN" </dev/null 2>&1 | tee "$link_log"
+  local exit_code=${PIPESTATUS[0]}
+  set -e
+
+  echo -e "${DIM}────────────────────────${NC}"
+  echo ""
+
+  if [ -f ".vercel/project.json" ]; then
+    if [ "$exit_code" -ne 0 ]; then
+      warn "Vercel CLI returned exit $exit_code, but the project was linked successfully."
+      warn "(Likely a non-fatal GitHub auto-connect step — safe to ignore.)"
+    fi
+    rm -f "$link_log"
+    return
+  fi
+
+  err "Vercel link failed (exit code $exit_code)."
+  echo ""
+  echo "  Common causes:"
+  echo -e "  ${CYAN}• Project name conflict${NC} — '${BOLD}$VERCEL_PROJECT_NAME${NC}' is taken in your account/team."
+  echo "    Set a unique name in .env:"
+  echo -e "    ${CYAN}VERCEL_PROJECT_NAME=my-postbox-app${NC}"
+  echo -e "  ${CYAN}• Invalid VERCEL_TOKEN${NC} — generate a new one at https://vercel.com/account/tokens"
+  echo ""
+  echo -e "  Full output saved to: ${CYAN}$link_log${NC}"
+  exit 1
+}
+
 # Get stable production URL from a deployment URL
 # vercel --prod outputs deployment-specific URLs (with hash), but we want the stable alias
 get_prod_url() {
   local deploy_url="$1"
   local prod_url=""
+  local inspect_out
 
   # Method 1: Get aliases from vercel inspect
-  prod_url=$(npx vercel inspect "$deploy_url" --token "$VERCEL_TOKEN" 2>&1 \
+  set +e
+  inspect_out=$(CI=1 npx vercel inspect "$deploy_url" --token "$VERCEL_TOKEN" </dev/null 2>&1)
+  set -e
+
+  prod_url=$(echo "$inspect_out" \
     | grep -oE '[a-zA-Z0-9_.-]+\.vercel\.app' \
     | awk '{ print length, $0 }' | sort -n | head -1 | awk '{print $2}' || true)
 
   if [ -n "$prod_url" ]; then
     echo "https://$prod_url"
   else
+    warn "Could not resolve stable production URL via 'vercel inspect'." >&2
+    echo "${DIM}── vercel inspect output ──${NC}" >&2
+    echo "$inspect_out" | sed 's/^/  /' >&2
+    echo "${DIM}───────────────────────────${NC}" >&2
     # Fallback to the deployment URL
     echo "$deploy_url"
   fi
+}
+
+# Run `vercel --prod` with live streaming output and robust error reporting.
+# Sets the global $DEPLOY_URL on success; exits the script on failure.
+run_vercel_deploy() {
+  local deploy_log
+  deploy_log=$(mktemp)
+
+  echo ""
+  echo -e "${DIM}── vercel CLI output ──${NC}"
+
+  # Tee to both the user's terminal and the log file. Disable errexit while the
+  # pipeline runs so we can inspect the real exit code from PIPESTATUS.
+  # CI=1 + </dev/null block any interactive prompts the CLI may slip in.
+  set +e
+  CI=1 npx vercel --prod --yes --token "$VERCEL_TOKEN" \
+    --build-env NEXT_PUBLIC_CONVEX_URL="$NEXT_PUBLIC_CONVEX_URL" \
+    --build-env NEXT_PUBLIC_CONVEX_SITE_URL="$NEXT_PUBLIC_CONVEX_SITE_URL" \
+    </dev/null 2>&1 | tee "$deploy_log"
+  local exit_code=${PIPESTATUS[0]}
+  set -e
+
+  echo -e "${DIM}───────────────────────${NC}"
+  echo ""
+
+  # Strip ANSI color codes before grepping for the URL
+  DEPLOY_URL=$(sed -E 's/\x1b\[[0-9;]*[mK]//g' "$deploy_log" \
+    | grep -oE 'https://[a-zA-Z0-9.-]+\.vercel\.app' \
+    | tail -1)
+
+  if [ "$exit_code" -ne 0 ] || [ -z "$DEPLOY_URL" ]; then
+    err "Vercel deployment failed (exit code $exit_code)."
+    echo ""
+    echo "  Common causes:"
+    echo -e "  ${CYAN}• Invalid VERCEL_TOKEN${NC} — generate a new one at https://vercel.com/account/tokens"
+    echo -e "  ${CYAN}• Wrong team scope${NC} — if the token belongs to a team, you may need to pass --scope <team-slug>"
+    echo -e "  ${CYAN}• Build error${NC} — see the vercel CLI output above for the actual failure"
+    echo ""
+    echo -e "  Full output saved to: ${CYAN}$deploy_log${NC}"
+    echo "  Try running manually:"
+    echo "    npx vercel --prod --yes --token \"\$VERCEL_TOKEN\" \\"
+    echo "      --build-env NEXT_PUBLIC_CONVEX_URL=$NEXT_PUBLIC_CONVEX_URL"
+    exit 1
+  fi
+
+  rm -f "$deploy_log"
 }
 
 # Set env var on Vercel (piped to avoid shell escaping)
@@ -107,7 +237,7 @@ vercel_env_set() {
   local name="$1" value="$2"
   if [ -z "$value" ]; then return; fi
   # Try to add first, if it exists, update it
-  echo "$value" | npx vercel env add "$name" production --force --token "$VERCEL_TOKEN" 2>/dev/null \
+  echo "$value" | CI=1 npx vercel env add "$name" production --force --token "$VERCEL_TOKEN" 2>/dev/null \
     && success "  Vercel: $name" \
     || warn "  Vercel: could not set $name"
 }
@@ -174,14 +304,12 @@ if [ "$1" = "--update" ]; then
 
   # Re-deploy to Vercel
   log "Deploying to Vercel..."
-  DEPLOY_URL=$(npx vercel --prod --yes --token "$VERCEL_TOKEN" \
-    --build-env NEXT_PUBLIC_CONVEX_URL="$NEXT_PUBLIC_CONVEX_URL" \
-    --build-env NEXT_PUBLIC_CONVEX_SITE_URL="$NEXT_PUBLIC_CONVEX_SITE_URL" \
-    2>/dev/null)
+  link_vercel_project
+  run_vercel_deploy
 
   # Resolve stable production URL
   PROD_URL=$(get_prod_url "$DEPLOY_URL")
-  success "Deployed!"
+  success "Deployed: $DEPLOY_URL"
 
   echo ""
   echo -e "${GREEN}${BOLD}╔══════════════════════════════════════════════╗${NC}"
@@ -261,19 +389,14 @@ echo ""
 echo -e "${BOLD}Step 4/5:${NC} Deploying to Vercel..."
 
 # Deploy to Vercel with build-time env vars passed inline.
-# (vercel env add needs an existing project, but this IS the first deploy that creates it)
-log "Building and deploying (this may take a few minutes)..."
-DEPLOY_URL=$(npx vercel --prod --yes --token "$VERCEL_TOKEN" \
-  --build-env NEXT_PUBLIC_CONVEX_URL="$NEXT_PUBLIC_CONVEX_URL" \
-  --build-env NEXT_PUBLIC_CONVEX_SITE_URL="$NEXT_PUBLIC_CONVEX_SITE_URL" \
-  2>/dev/null)
+# Link first with an explicit, sanitized project name so Vercel doesn't try
+# to derive one from the cwd path (which can produce '---' names on macOS
+# folders that contain spaces, etc).
+link_vercel_project
 
-if [ -z "$DEPLOY_URL" ]; then
-  err "Vercel deployment failed."
-  echo "  Try running manually:"
-  echo "  npx vercel --prod --yes --build-env NEXT_PUBLIC_CONVEX_URL=$NEXT_PUBLIC_CONVEX_URL"
-  exit 1
-fi
+log "Building and deploying (this may take a few minutes)..."
+run_vercel_deploy
+success "Deployment URL: $DEPLOY_URL"
 
 # Resolve stable production URL (not deployment-specific hash URL)
 log "Resolving stable production URL..."
