@@ -1,29 +1,31 @@
-"use client";
+"use client"
 
-import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
-import { Separator } from "@/components/ui/separator";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { useConvexAuth, useQuery } from "convex/react";
-import { api } from "@/convex/_generated/api";
-import { ThemeToggle } from "@/components/ui/theme/theme-toggle";
+import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar"
+import { Separator } from "@/components/ui/separator"
+import { useConvexAuth, useQuery } from "convex/react"
+import { api } from "@/convex/_generated/api"
+import { ThemeToggle } from "@/components/ui/theme/theme-toggle"
+import { HeaderUserNav } from "./header-user-nav"
 
 type PageHeaderProps = {
-  title: string;
-};
+  title: string
+}
 
 export function PageHeader({ title }: PageHeaderProps) {
-  const { state } = useSidebar();
+  const { state } = useSidebar()
   const today = new Date().toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",
-  });
-  const { isAuthenticated } = useConvexAuth();
+  })
+  const { isAuthenticated } = useConvexAuth()
 
-  const currentUser = useQuery(api.users.getMe, isAuthenticated ? {} : "skip");
+  const currentUser = useQuery(api.users.getMe, isAuthenticated ? {} : "skip")
 
   return (
-    <header className={`flex fixed top-0 left-0 right-0 ${state === "collapsed" ? "md:left-[var(--sidebar-width-icon)]" : "md:left-[var(--sidebar-width)]"} z-49 h-13 items-center justify-between border-b bg-background px-6 transition-[left] duration-200 ease-linear`}>
+    <header
+      className={`fixed top-0 right-0 left-0 flex ${state === "collapsed" ? "md:left-[var(--sidebar-width-icon)]" : "md:left-[var(--sidebar-width)]"} z-49 h-13 items-center justify-between border-b bg-background px-6 transition-[left] duration-200 ease-linear`}
+    >
       <div className="flex items-center gap-3">
         <SidebarTrigger className="-ml-2" />
         <Separator orientation="vertical" />
@@ -33,18 +35,8 @@ export function PageHeader({ title }: PageHeaderProps) {
         <span className="text-xs text-muted-foreground">{today}</span>
         <Separator orientation="vertical" />
         <ThemeToggle />
-        <Avatar className="size-7">
-          <AvatarFallback className="bg-primary text-[10px] text-primary-foreground">
-            {currentUser?.email
-              ? currentUser.email
-                  .split(" ")
-                  .map((n) => n[0])
-                  .join("")
-                  .toLocaleUpperCase()
-              : "?"}
-          </AvatarFallback>
-        </Avatar>
+        {currentUser && <HeaderUserNav user={currentUser} />}
       </div>
     </header>
-  );
+  )
 }
