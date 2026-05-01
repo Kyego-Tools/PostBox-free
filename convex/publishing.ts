@@ -54,9 +54,28 @@ export const postNow = action({
         continue
       }
 
-      // Map contentType for the scheduledPosts entry
+      // Per-account override (e.g. IG/FB "story", IG "reel"). Falls back to
+      // the generic post type when no override is provided.
+      const perAccountType = args.perAccountContentTypes?.[accountId]
+
+      // Content type passed to the publisher (matches platforms/publish/types ContentType).
+      // - "story" / "reel": use the override directly
+      // - otherwise: use the generic post type ("image" / "video" / "text")
+      const publishContentType =
+        perAccountType === "story" || perAccountType === "reel"
+          ? perAccountType
+          : args.contentType
+
+      // Content type stored on the scheduledPosts row (schema enum:
+      // feed/story/reel/video/text). Mirrors the override when present.
       const schemaContentType =
-        args.contentType === "image" ? "feed" : args.contentType
+        perAccountType === "story"
+          ? "story"
+          : perAccountType === "reel"
+            ? "reel"
+            : args.contentType === "image"
+              ? "feed"
+              : args.contentType
 
       // Create a scheduledPosts entry so instant posts appear in All Posts
       const postId = await ctx.runMutation(
@@ -86,7 +105,7 @@ export const postNow = action({
         {
           userId,
           accountId,
-          contentType: args.contentType,
+          contentType: publishContentType,
           caption: args.caption,
           mediaIds: args.mediaIds,
           scheduledPostId: postId,

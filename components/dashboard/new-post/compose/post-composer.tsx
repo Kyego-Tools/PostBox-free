@@ -7,8 +7,8 @@ import {
   type DraftData,
 } from "@/hooks/use-post-composer"
 import AccountSelector, {
-  FacebookContentType,
   type InstagramContentType,
+  type FacebookContentType,
 } from "./account-selector"
 import CaptionEditor from "./caption-editor"
 import MediaUpload from "./media-upload"
