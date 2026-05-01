@@ -81,32 +81,10 @@ On first launch (~30 seconds), Docker automatically:
 - Generates authentication keys (JWT + encryption)
 - Pushes your platform credentials to Convex
 
-Open [http://localhost:3000](http://localhost:3000) — you're done!
+Open [http://localhost:3000](http://localhost:3000) — you're done
 
-### Option 2: Manual Setup (for developers)
 
-Requires Node.js 18+ installed.
-
-```bash
-git clone https://github.com/YOUR_USERNAME/social-media-scheduler.git
-cd social-media-scheduler
-bash setup.sh
-```
-
-The setup script walks you through everything interactively:
-1. Installs dependencies
-2. Creates your Convex project (free)
-3. Generates encryption and auth keys
-4. Prompts for OAuth credentials (optional, add later)
-5. Deploys backend functions
-
-Then start the dev server:
-
-```bash
-npm run dev
-```
-
-### Option 3: Deploy to Vercel
+### Option 2: Deploy to Vercel
 
 Deploy to Vercel directly from your local machine — no GitHub required, fully automated.
 
@@ -120,8 +98,8 @@ Requires Node.js 18+ installed.
 **Step 2: Configure**
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/social-media-scheduler.git
-cd social-media-scheduler
+git clone https://github.com/Kyego-Tools/PostBox-free.git
+cd PostBox-free
 cp .env.example .env
 ```
 
@@ -130,7 +108,7 @@ Fill in `.env` with your Convex values + `VERCEL_TOKEN` (+ optional platform cre
 **Step 3: Deploy**
 
 ```bash
-bash deploy-vercel.sh
+bash scripts/deploy-vercel.sh
 ```
 
 Zero prompts — the script automatically:
@@ -144,7 +122,7 @@ Zero prompts — the script automatically:
 **Updating:**
 
 ```bash
-bash deploy-vercel.sh --update
+bash scripts/deploy-vercel.sh --update
 ```
 
 ## Connecting Social Platforms
