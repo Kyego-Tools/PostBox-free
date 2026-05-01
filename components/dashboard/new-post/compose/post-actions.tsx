@@ -50,6 +50,23 @@ export default function PostActions({
   onSubmit,
   onSaveDraft,
 }: Props) {
+  const now = new Date()
+  const today = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate()
+  )
+
+  const isToday =
+    !scheduledDate ||
+    (scheduledDate.getFullYear() === today.getFullYear() &&
+      scheduledDate.getMonth() === today.getMonth() &&
+      scheduledDate.getDate() === today.getDate())
+
+  const minTime = isToday
+    ? `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`
+    : undefined
+
   return (
     <div className="space-y-4 rounded-xl border bg-background p-4">
       {/* Schedule toggle */}
@@ -81,6 +98,8 @@ export default function PostActions({
                 mode="single"
                 selected={scheduledDate}
                 onSelect={onDateChange}
+                disabled={{ before: today }}
+                startMonth={today}
               />
             </PopoverContent>
           </Popover>
@@ -89,6 +108,7 @@ export default function PostActions({
             <input
               type="time"
               value={scheduledTime}
+              min={minTime}
               onChange={(e) => onTimeChange(e.target.value)}
               className="flex-1 rounded-md border bg-background px-3 py-2 text-sm"
             />
