@@ -135,6 +135,9 @@ export const listAll = query({
       for (const post of insights) {
         // Skip if this platform post was already created through our app
         if (appPlatformPostIds.has(post.postId)) continue
+        // TikTok: all posts are tracked via the scheduler (inbox flow),
+        // so never show platform-sourced TikTok posts to avoid duplicates.
+        if (account.platform === "tiktok") continue
 
         const publishedAt = new Date(post.createdTime).getTime()
 
