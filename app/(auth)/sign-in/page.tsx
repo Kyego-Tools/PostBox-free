@@ -1,17 +1,18 @@
-"use client";
+"use client"
 
-import { Suspense, useState } from "react";
-import { useRouter } from "nextjs-toploader/app";
-import { useAuthActions } from "@convex-dev/auth/react";
-import { toast } from "sonner";
+import { Suspense, useState } from "react"
+import { useRouter } from "nextjs-toploader/app"
+import { useAuthActions } from "@convex-dev/auth/react"
+import { toast } from "sonner"
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Loader2, CalendarClock, Eye, EyeOff } from "lucide-react";
-import SetupShowcase from "@/components/auth/setup/setup-showcase";
-import { useConvexAuth, useQuery } from "convex/react";
-import { api } from "@/convex/_generated/api";
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Loader2, CalendarClock, Eye, EyeOff } from "lucide-react"
+import SetupShowcase from "@/components/auth/setup/setup-showcase"
+import { useConvexAuth, useQuery } from "convex/react"
+import { api } from "@/convex/_generated/api"
+import Image from "next/image"
 
 export default function SignInPage() {
   return (
@@ -24,37 +25,37 @@ export default function SignInPage() {
     >
       <SignInContent />
     </Suspense>
-  );
+  )
 }
 
 function SignInContent() {
-  const router = useRouter();
-  const { isAuthenticated, isLoading: isAuthLoading } = useConvexAuth();
+  const router = useRouter()
+  const { isAuthenticated, isLoading: isAuthLoading } = useConvexAuth()
 
-  const { signIn } = useAuthActions();
-  const hasAdmin = useQuery(api.setup.hasAdmin);
+  const { signIn } = useAuthActions()
+  const hasAdmin = useQuery(api.setup.hasAdmin)
 
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPw, setShowPw] = useState(false);
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [showPw, setShowPw] = useState(false)
 
   async function handleSignIn(e: React.FormEvent) {
-    e.preventDefault();
-    setIsLoading(true);
-    setError(null);
+    e.preventDefault()
+    setIsLoading(true)
+    setError(null)
 
     try {
-      await signIn("password", { email, password, flow: "signIn" });
-      toast.success("Welcome back!", { description: "Signing you in..." });
-      router.push("/dashboard");
+      await signIn("password", { email, password, flow: "signIn" })
+      toast.success("Welcome back!", { description: "Signing you in..." })
+      router.push("/dashboard")
     } catch {
-      const message = "Invalid email or password. Please try again.";
-      setError(message);
-      toast.error("Sign in failed", { description: message });
+      const message = "Invalid email or password. Please try again."
+      setError(message)
+      toast.error("Sign in failed", { description: message })
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
   }
   // Show loading while checking auth
@@ -66,9 +67,9 @@ function SignInContent() {
   ) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
-    );
+    )
   }
 
   return (
@@ -77,10 +78,14 @@ function SignInContent() {
       <div className="flex w-full flex-col justify-between px-6 py-8 sm:px-12 lg:w-1/2 lg:px-16 xl:px-24">
         {/* Logo */}
         <div className="flex items-center gap-2.5">
-          <div className="flex size-9 items-center justify-center rounded-xl bg-primary/10">
-            <CalendarClock className="size-5 text-primary" />
-          </div>
-          <span className="text-base font-semibold">Social Scheduler</span>
+          <Image
+            src="/logo.png"
+            alt="PostBox"
+            width={36}
+            height={36}
+            className="size-9 text-primary"
+          />
+          <span className="text-base font-semibold">PostBox</span>
         </div>
 
         {/* Form area */}
@@ -133,7 +138,7 @@ function SignInContent() {
                 <button
                   type="button"
                   onClick={() => setShowPw(!showPw)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  className="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                   tabIndex={-1}
                 >
                   {showPw ? (
@@ -164,9 +169,9 @@ function SignInContent() {
       </div>
 
       {/* Right — showcase (hidden on mobile) */}
-      <div className="hidden lg:block lg:w-1/2 p-4">
+      <div className="hidden p-4 lg:block lg:w-1/2">
         <SetupShowcase />
       </div>
     </div>
-  );
+  )
 }

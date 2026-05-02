@@ -1,6 +1,6 @@
-import { CalendarClock } from "lucide-react";
-import SetupForm from "@/components/auth/setup/setup-form";
-import SetupShowcase from "@/components/auth/setup/setup-showcase";
+import SetupForm from "@/components/auth/setup/setup-form"
+import SetupShowcase from "@/components/auth/setup/setup-showcase"
+import Image from "next/image"
 
 export default function SetupPage() {
   return (
@@ -9,10 +9,14 @@ export default function SetupPage() {
       <div className="flex w-full flex-col justify-between px-6 py-8 sm:px-12 lg:w-1/2 lg:px-16 xl:px-24">
         {/* Logo */}
         <div className="flex items-center gap-2.5">
-          <div className="flex size-9 items-center justify-center rounded-xl bg-primary/10">
-            <CalendarClock className="size-5 text-primary" />
-          </div>
-          <span className="text-base font-semibold">Social Scheduler</span>
+          <Image
+            src="/logo.png"
+            alt="PostBox"
+            width={36}
+            height={36}
+            className="size-9 text-primary"
+          />
+          <span className="text-base font-semibold">PostBox</span>
         </div>
 
         {/* Form area */}
@@ -37,9 +41,9 @@ export default function SetupPage() {
       </div>
 
       {/* Right — showcase (hidden on mobile) */}
-      <div className="hidden lg:block lg:w-1/2 p-4">
+      <div className="hidden p-4 lg:block lg:w-1/2">
         <SetupShowcase />
       </div>
     </div>
-  );
+  )
 }
