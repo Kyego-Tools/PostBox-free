@@ -1,15 +1,15 @@
-"use client";
+"use client"
 
-import { useQuery } from "convex/react";
-import { api } from "@/convex/_generated/api";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Clock, CalendarClock } from "lucide-react";
-import { PlatformIcon } from "@/components/dashboard/analytics/platform-icon";
-import { Skeleton } from "@/components/ui/skeleton";
-import Link from "next/link";
+import { useQuery } from "convex/react"
+import { api } from "@/convex/_generated/api"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Clock, CalendarClock, VideoIcon } from "lucide-react"
+import { PlatformIcon } from "@/components/dashboard/analytics/platform-icon"
+import { Skeleton } from "@/components/ui/skeleton"
+import Link from "next/link"
 
 export default function UpcomingPosts() {
-  const scheduled = useQuery(api.posts.listScheduled);
+  const scheduled = useQuery(api.posts.listScheduled)
 
   if (scheduled === undefined) {
     return (
@@ -24,10 +24,10 @@ export default function UpcomingPosts() {
           <Skeleton className="h-24 w-full" />
         </CardContent>
       </Card>
-    );
+    )
   }
 
-  const upcoming = scheduled.slice(0, 4);
+  const upcoming = scheduled.slice(0, 4)
 
   return (
     <Card>
@@ -62,16 +62,16 @@ export default function UpcomingPosts() {
         ) : (
           <div className="space-y-3">
             {upcoming.map((post) => {
-              const date = new Date(post.scheduledAt);
+              const date = new Date(post.scheduledAt)
               const dateStr = date.toLocaleDateString("en-US", {
                 weekday: "short",
                 month: "short",
                 day: "numeric",
-              });
+              })
               const timeStr = date.toLocaleTimeString("en-US", {
                 hour: "numeric",
                 minute: "2-digit",
-              });
+              })
 
               return (
                 <div
@@ -79,13 +79,29 @@ export default function UpcomingPosts() {
                   className="flex items-start gap-3 rounded-lg border p-2.5"
                 >
                   {/* Thumbnail or platform icon */}
-                  <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-muted">
+                  <div className="relative flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted">
                     {post.mediaUrls?.[0] ? (
-                      <img
-                        src={post.mediaUrls[0]}
-                        alt=""
-                        className="size-9 rounded-md object-cover"
-                      />
+                      post.contentType === "video" ||
+                      post.contentType === "reel" ? (
+                        <>
+                          <video
+                            src={post.mediaUrls[0]}
+                            className="size-9 object-cover"
+                            preload="metadata"
+                            muted
+                            playsInline
+                          />
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                            <VideoIcon className="size-3 text-white drop-shadow" />
+                          </div>
+                        </>
+                      ) : (
+                        <img
+                          src={post.mediaUrls[0]}
+                          alt=""
+                          className="size-9 rounded-md object-cover"
+                        />
+                      )
                     ) : (
                       <PlatformIcon
                         platform={post.platform}
@@ -108,11 +124,11 @@ export default function UpcomingPosts() {
                     </div>
                   </div>
                 </div>
-              );
+              )
             })}
           </div>
         )}
       </CardContent>
     </Card>
-  );
+  )
 }
