@@ -10,6 +10,7 @@ import {
   IconChartBar,
   IconFilePlus,
   IconFilePencil,
+  IconLifebuoy,
 } from "@tabler/icons-react"
 
 import {
@@ -194,7 +195,26 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           />
         ))}
       </SidebarContent>
-      <SidebarFooter />
+      <SidebarFooter className="p-2">
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              asChild
+              tooltip="Get help on Skool"
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <a
+                href="https://www.skool.com/elvito-ai-automations-8414"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <IconLifebuoy className="size-4" />
+                <span>Support &amp; Community</span>
+              </a>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>{" "}
     </Sidebar>
   )
 }
