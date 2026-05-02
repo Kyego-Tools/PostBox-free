@@ -27,13 +27,13 @@ Built for people who want to own their tools.
 ```
 ┌─────────────────┐         ┌──────────────────────┐
 │   Next.js App   │ ←────→  │   Convex (Backend)   │
-│  (you host it)  │         │  (cloud, free tier)   │
-│                 │         │                       │
-│  • Dashboard    │         │  • Database            │
-│  • Post composer│         │  • Scheduled jobs      │
-│  • Calendar     │         │  • OAuth callbacks     │
-│  • Analytics    │         │  • File storage        │
-└─────────────────┘         │  • Token encryption    │
+│  (you host it)  │         │  (cloud, free tier)  │
+│                 │         │                      │
+│  • Dashboard    │         │  • Database          │
+│  • Post composer│         │  • Scheduled jobs    │
+│  • Calendar     │         │  • OAuth callbacks   │
+│  • Analytics    │         │  • File storage      │
+└─────────────────┘         │  • Token encryption  │
                             └──────────────────────┘
 ```
 
