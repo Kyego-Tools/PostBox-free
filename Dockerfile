@@ -63,7 +63,14 @@ COPY --chown=nextjs:nodejs scripts/generate-keys.mjs ./setup-deps/generate-keys.
 # Entrypoints
 COPY --chown=nextjs:nodejs scripts/docker/entrypoint.sh ./docker-entrypoint.sh
 COPY --chown=nextjs:nodejs scripts/docker/setup.sh ./docker-setup.sh
-RUN chmod +x docker-entrypoint.sh docker-setup.sh
+# Strip Windows CRLF line endings + make executable. Defensive: works even
+# when a developer's local working tree has CRLF endings on these scripts
+# (.gitattributes ensures fresh clones get LF, but existing Windows clones
+# may already have CRLF baked in — without this, the shebang ends up as
+# `#!/bin/sh\r` and the kernel reports a misleading "no such file or
+# directory" against the script path).
+RUN sed -i 's/\r$//' docker-entrypoint.sh docker-setup.sh && \
+    chmod +x docker-entrypoint.sh docker-setup.sh
 
 USER nextjs
 EXPOSE 3000

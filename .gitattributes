@@ -1,0 +1,16 @@
+# Default: let Git decide based on content. macOS/Linux users get LF;
+# Windows users get whatever their `core.autocrlf` setting prefers.
+* text=auto
+
+# Files that MUST have LF endings on every platform — they run inside
+# a Linux container, so a stray \r in the shebang line breaks them with
+# the misleading "no such file or directory" error from the Linux kernel.
+*.sh            text eol=lf
+*.bash          text eol=lf
+Dockerfile      text eol=lf
+Dockerfile.*    text eol=lf
+.dockerignore   text eol=lf
+
+# Lockfiles can be huge; treat as binary so Git doesn't try to merge or
+# eol-translate them.
+package-lock.json -text
