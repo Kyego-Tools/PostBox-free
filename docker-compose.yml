@@ -1,0 +1,27 @@
+# Social Media Scheduler — Docker Compose
+#
+# Quick start:
+#   1. Copy .env.example to .env
+#   2. Fill in your Convex URLs + deploy key
+#   3. Run: docker compose up -d
+#   4. First launch auto-configures everything (takes ~30 seconds)
+#
+# Note: The Convex backend runs in the cloud (free tier).
+#       This container runs the Next.js frontend and handles
+#       first-run setup (deploying functions, generating keys).
+
+services:
+  app:
+    build:
+      context: .
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    volumes:
+      # Persist the setup marker so it doesn't re-run on restart
+      - scheduler-data:/app/.convex-setup-data
+    restart: unless-stopped
+
+volumes:
+  scheduler-data:
