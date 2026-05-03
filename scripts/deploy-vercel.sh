@@ -40,7 +40,16 @@ if [ ! -f "$ENV_FILE" ]; then
 fi
 
 # Parse the env file line by line (handles special chars like | in deploy keys)
+ENV_FIRST_LINE=1
 while IFS= read -r line || [ -n "$line" ]; do
+  # Strip UTF-8 BOM from the very first line (some Windows editors add one)
+  if [ "$ENV_FIRST_LINE" -eq 1 ]; then
+    line="${line#$'\xef\xbb\xbf'}"
+    ENV_FIRST_LINE=0
+  fi
+  # Strip Windows CRLF carriage return — without this, every value gets a
+  # trailing \r baked in and tokens like CONVEX_DEPLOY_KEY get rejected.
+  line="${line%$'\r'}"
   # Skip empty lines and comments
   [[ -z "$line" || "$line" =~ ^[[:space:]]*# ]] && continue
   # Extract key=value (only split on first =)
